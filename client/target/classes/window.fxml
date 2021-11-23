@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/11.0.2" fx:controller="ru.aberezhnoy.java.network.chat.client.Controller">
+    <TextArea fx:id="msgArea" editable="false" VBox.vgrow="ALWAYS" />
+    <HBox>
+        <TextField fx:id="msgField" promptText="Write the message" HBox.hgrow="ALWAYS" />
+        <Button onAction="#sendMsg" text="Send" />
+    </HBox>
+</VBox>
