@@ -1,0 +1,7 @@
+# Project exclude paths
+/java-network-chat/server/target/
+/java-network-chat/client/target/
+.idea
+*.iws
+*.iml
+*.ipr
