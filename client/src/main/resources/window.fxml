@@ -2,11 +2,15 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<VBox alignment="CENTER" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/11.0.2" fx:controller="ru.aberezhnoy.java.network.chat.client.Controller">
-    <TextArea fx:id="msgArea" editable="false" VBox.vgrow="ALWAYS" />
-    <HBox>
-        <TextField fx:id="msgField" promptText="Write the message" HBox.hgrow="ALWAYS" />
-        <Button onAction="#sendMsg" text="Send" />
+<VBox alignment="CENTER" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/11.0.2"
+      fx:controller="ru.aberezhnoy.io.network.chat.client.Controller">
+    <HBox fx:id="loginPanel">
+        <TextField fx:id="usernameField" promptText="Enter your nickname" onAction="#login" HBox.hgrow="ALWAYS"/>
+        <Button onAction="#login" text="Entry"/>
+    </HBox>
+    <TextArea fx:id="msgArea" editable="false" VBox.vgrow="ALWAYS"/>
+    <HBox fx:id="msgPanel" visible="false" managed="false">
+        <TextField fx:id="msgField" promptText="Write the message" onAction="#sendMsg" HBox.hgrow="ALWAYS"/>
+        <Button onAction="#sendMsg" text="Text"/>
     </HBox>
 </VBox>
