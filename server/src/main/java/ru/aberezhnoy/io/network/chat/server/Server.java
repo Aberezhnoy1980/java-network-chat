@@ -9,10 +9,17 @@ import java.util.List;
 public class Server {
     private int port;
     private List<ClientHandler> clients;
+    private AuthenticationProvider authenticationProvider;
+
+    public AuthenticationProvider getAuthenticationProvider () {
+        return authenticationProvider;
+    }
 
     public Server(int port) {
         this.port = port;
         this.clients = new ArrayList<>();
+        this.authenticationProvider = new InMemoryAuthenticationProvider();
+        this.authenticationProvider.init();
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server start at port " + port);
             while (true) {
@@ -26,38 +33,50 @@ public class Server {
         }
     }
 
-    public List<ClientHandler> getClients() {
-        return clients;
-    }
-
-    public void subscribe(ClientHandler clientHandler) {
+    public synchronized void subscribe(ClientHandler clientHandler) {
         clients.add(clientHandler);
+        broadcastMessage(clientHandler.getUsername() + " entered the chat");
+        broadcastClientsList();
         System.out.println("Client subscribed");
     }
 
-    public void unsubscribe(ClientHandler clientHandler) {
+    public synchronized void unsubscribe(ClientHandler clientHandler) {
         clients.remove(clientHandler);
+        broadcastMessage(clientHandler.getUsername() + " left chat");
+        broadcastClientsList();
         System.out.println("Client unsubscribed");
     }
 
-//    public void sendPrivateMessage(ClientHandler sender, String recipientUsername, String message) throws IOException {
-//        for (ClientHandler c : clients) {
-//            if (c.getUsername().equals(recipientUsername)) {
-//                c.sendMessage("From: " + sender.getUsername() + " message: " + message);
-//                sender.sendMessage("To user: " + recipientUsername + " message: " + message);
-//                return;
-//            }
-//        }
-//        sender.sendMessage("Can't send the message to user " + recipientUsername + " there is no such user on the network");
-//    }
-
-    public void broadcastMessage(String message) throws IOException {
+    public synchronized void broadcastMessage(String message) {
         for (ClientHandler clientHandler : clients) {
             clientHandler.sendMessage(message);
         }
     }
 
-    public boolean isNickBusy(String username) {
+    public synchronized void sendPrivateMessage(ClientHandler sender, String recipientUsername, String message) {
+        for (ClientHandler c : clients) {
+            if (c.getUsername().equals(recipientUsername)) {
+                c.sendMessage("Message from " + sender.getUsername() + ": " + message);
+                sender.sendMessage("Message to " + recipientUsername + ": " + message);
+                return;
+            }
+        }
+        sender.sendMessage("Can't send the message to user " + recipientUsername + " there is no such user on the network");
+    }
+
+    public synchronized void broadcastClientsList() {
+        StringBuilder stringBuilder = new StringBuilder("/clients_list ");
+        for (ClientHandler c : clients) {
+            stringBuilder.append(c.getUsername()).append(" ");
+        }
+        stringBuilder.setLength(stringBuilder.length() - 1);
+        String clientsList = stringBuilder.toString();
+        for (ClientHandler clientHandler : clients) {
+            clientHandler.sendMessage(clientsList);
+        }
+    }
+
+    public synchronized boolean isUserOnline(String username) {
         for (ClientHandler clientHandler : clients) {
             if (clientHandler.getUsername().equals(username)) {
                 return true;

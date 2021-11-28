@@ -19,7 +19,7 @@ public class ClientApplication extends Application {
         Parent root = fxmlLoader.load();
         Controller controller = fxmlLoader.getController();
         primaryStage.setTitle("Network chat");
-        primaryStage.setScene(new Scene(root, 400, 400));
+        primaryStage.setScene(new Scene(root, 600, 400));
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {

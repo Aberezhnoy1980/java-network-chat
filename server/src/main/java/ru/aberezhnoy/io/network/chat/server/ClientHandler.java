@@ -1,5 +1,9 @@
 package ru.aberezhnoy.io.network.chat.server;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import ru.aberezhnoy.io.network.chat.client.Controller;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,6 +15,7 @@ public class ClientHandler {
     private DataInputStream in;
     private DataOutputStream out;
     private String username;
+    private final String COMMANDS = "\"/w [username] [message]\" - lets you to send a private message to the specific user\n \"/current_account\" - shows your current account\n \"/change_nickname [new nickname]\" - allows to change your current nickname\n \"/exit\" - close current session\n \"change_nick [new nickname]\" - lets you to change current nickname to the specified\n";
 
     public ClientHandler(Server server, Socket socket) throws IOException {
         this.server = server;
@@ -22,50 +27,40 @@ public class ClientHandler {
                 while (true) {
                     String msg = in.readUTF();
                     if (msg.startsWith("/login ")) {
-                        String usernameFromLogin = msg.split("\\s")[1];
-                        if (server.isNickBusy(usernameFromLogin)) {
+                        String[] tokens = msg.split("\\s",3);
+                        if(tokens.length !=3) {
+                            sendMessage("/login_failed. PLease enter your login and password");
+                            continue;
+                        }
+                        String login = tokens[1];
+                        String password = tokens[2];
+
+                        String userNickname = server.getAuthenticationProvider().getNicknameByLoginAndPassword(login, password);
+
+                        if(userNickname == null) {
+                            sendMessage("/login_failed. Please enter your login and password");
+                            continue;
+                        }
+                        if (server.isUserOnline(userNickname)) {
                             sendMessage("/login_failed. Current nickname is already used");
                             continue;
                         }
-                        username = usernameFromLogin;
-                        sendMessage("/login_ok " + username);
+                        username = userNickname;
+                        sendMessage("/login_ok " + login + " " + username);
                         server.subscribe(this);
                         System.out.println("Client " + username + " is logged in");
                         break;
                     }
                 }
-
                 while (true) {
                     String msg = in.readUTF();
 
-                    // client commands block
-                    if (msg.equals("/Who_am_i")) {
-                        sendMessage("Your current nickname is: " + username);
-                        continue;
-                    }
-                    if (msg.startsWith("/w ")) {
-                        String[] tokens = msg.split("\\s+", 3);
-                        if (tokens.length != 3) {
-                            sendMessage("Server: incorrect command");
-                            continue;
-                        }
-                        for (ClientHandler r : server.getClients()) {
-                            if (r.getUsername().equals(tokens[1])) {
-                                r.sendMessage("Message from " + this.username + ": " + tokens[2]);
-                                sendMessage("Message to " + tokens[1] + ": " + tokens[2]);
-                                break;
-                            }
-                            sendMessage("Can't send the message to user " + tokens[1] + " there is no such user on the network");
-                        }
+                    if (msg.startsWith("/")) {
+                        executeCommand(msg);
                         continue;
                     }
 
                     server.broadcastMessage(username + ": " + msg);
-
-//                    if(msg.startsWith("/Exit")) {
-//                        disconnect();
-//                        System.out.println("Client " + username + " is logged out");
-//                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -79,8 +74,56 @@ public class ClientHandler {
         return username;
     }
 
-    public void sendMessage(String message) throws IOException {
-        out.writeUTF(message);
+    public void executeCommand(String cmd) {
+        if (cmd.startsWith("/w ")) {
+            String[] tokens = cmd.split("\\s+", 3);
+            if (tokens.length != 3) {
+                sendMessage("Invalid command. PLease try again");
+                return;
+            }
+            server.sendPrivateMessage(this, tokens[1], tokens[2]);
+        }
+        if (cmd.equals("/exit")) {
+            sendMessage("/exit");
+            System.out.println("Client " + username + " is logged out");
+            disconnect();
+        }
+        if (cmd.equals("/who_am_i")) {
+            sendMessage("Your current nickname is: " + username);
+        }
+        if (cmd.equals("/info") || cmd.equals("/?")) {
+            sendMessage("Please, use the following commands to get additional services:\n" + COMMANDS);
+//            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Please, use the following commands to get additional services: " + COMMANDS, ButtonType.OK);
+//            alert.showAndWait();
+        }
+        if (cmd.startsWith("/change_nick ")) {
+            String [] tokens = cmd.split("\\s+",2);
+            if(tokens.length !=2) {
+                sendMessage("Invalid or bad command, please try again");
+                return;
+            }
+            String newNickname = tokens[1];
+            if (newNickname.isEmpty()) {
+                sendMessage("nickname can't be empty");
+                return;
+            }
+            if(server.isUserOnline(newNickname)) {
+                sendMessage("The nickname is already exist. Please chase another one");
+                return;
+            }
+//            server.changeNickname(username, newNickname);
+            username = newNickname;
+            sendMessage("Your new nickname is: " + newNickname);
+            server.broadcastClientsList();
+        }
+    }
+
+    public void sendMessage(String message) {
+        try {
+            out.writeUTF(message);
+        } catch (IOException e) {
+            disconnect();
+        }
     }
 
     public void disconnect() {
