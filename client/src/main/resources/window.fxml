@@ -2,11 +2,20 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<VBox alignment="CENTER" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/11.0.2" fx:controller="ru.aberezhnoy.java.network.chat.client.Controller">
-    <TextArea fx:id="msgArea" editable="false" VBox.vgrow="ALWAYS" />
-    <HBox>
-        <TextField fx:id="msgField" promptText="Write the message" HBox.hgrow="ALWAYS" />
-        <Button onAction="#sendMsg" text="Send" />
+<VBox alignment="CENTER" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/11.0.2"
+      fx:controller="ru.aberezhnoy.io.network.chat.client.Controller">
+    <HBox fx:id="loginPanel">
+        <TextField fx:id="loginField" text="Login" promptText="Enter your nickname" onAction="#login" HBox.hgrow="ALWAYS"/>
+        <PasswordField fx:id="passwordField" text="password" promptText="Enter your pass" onAction="#login" HBox.hgrow="ALWAYS"/>
+        <Button onAction="#login" text="Entry"/>
+    </HBox>
+    <HBox VBox.vgrow="ALWAYS">
+         <TextArea fx:id="msgArea" HBox.hgrow="ALWAYS" editable="false" wrapText="true"/>
+         <ListView fx:id="clientsList" prefWidth="150" maxWidth="150" minWidth="150"/>
+    </HBox>
+    <HBox fx:id="msgPanel">
+        <Button onAction="#logout" text="Logout"/>
+        <TextField fx:id="msgField" promptText="Write the message" onAction="#sendMsg" HBox.hgrow="ALWAYS"/>
+        <Button onAction="#sendMsg" text="Send"/>
     </HBox>
 </VBox>
